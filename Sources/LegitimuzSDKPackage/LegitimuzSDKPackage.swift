@@ -1,7 +1,6 @@
 // The Swift Programming Language
 // https://docs.swift.org/swift-book
 
-
 import Foundation
 import SwiftUI
 
@@ -106,6 +105,7 @@ public struct LegitimuzEventHandlers {
 }
 
 /// Main LegitimuzSDK SwiftUI view component
+@available(iOS 16.0, *)
 public struct LegitimuzWebView: View {
     private let configuration: LegitimuzConfiguration
     private let eventHandlers: LegitimuzEventHandlers
@@ -127,6 +127,6 @@ public struct LegitimuzWebView: View {
             configuration: configuration,
             eventHandlers: eventHandlers
         )
-        .edgesIgnoringSafeArea(.all)
+        .ignoresSafeArea(SafeAreaRegions.all)
     }
 }

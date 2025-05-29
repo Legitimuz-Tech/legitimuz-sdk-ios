@@ -28,7 +28,7 @@ LegitimuzSDK provides a clean, SwiftUI-based interface for integrating Legitimuz
 Add LegitimuzSDK to your project using Xcode:
 
 1. In Xcode, go to **File → Add Package Dependencies**
-2. Enter the repository URL: `https://github.com/yourusername/LegitimuzSDK`
+2. Enter the repository URL: `https://github.com/yourusername/LegitimuzSDKPackage`
 3. Choose your version requirements
 4. Add the package to your target
 
@@ -36,7 +36,7 @@ Or add it to your `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/yourusername/LegitimuzSDK", from: "1.0.0")
+    .package(url: "https://github.com/yourusername/LegitimuzSDKPackage", from: "1.0.0")
 ]
 ```
 
@@ -344,6 +344,28 @@ let config = LegitimuzConfiguration(
 ```
 
 This will output detailed logs with `[LegitimuzSDK]` prefix in Xcode console.
+
+## Publishing Your Package
+
+Once you're ready to publish:
+
+1. **Create a Git Tag:**
+   ```bash
+   git tag 1.0.0
+   git push origin 1.0.0
+   ```
+
+2. **Update Your GitHub Repository:**
+   - Ensure it's public
+   - Add description: "Swift Package for integrating Legitimuz identity verification services"
+   - Add topics: swift-package, ios, identity-verification, kyc
+
+3. **Developers Can Then Add It:**
+   ```swift
+   dependencies: [
+       .package(url: "https://github.com/yourusername/LegitimuzSDKPackage", from: "1.0.0")
+   ]
+   ```
 
 ## Contributing
 

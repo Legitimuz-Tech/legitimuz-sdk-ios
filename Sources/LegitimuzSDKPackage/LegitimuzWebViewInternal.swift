@@ -4,14 +4,20 @@ import CoreLocation
 
 // MARK: - Internal WebView Implementation
 
+#if os(iOS)
+@available(iOS 16.0, *)
 internal struct LegitimuzWebViewInternal: UIViewRepresentable {
     let configuration: LegitimuzConfiguration
     let eventHandlers: LegitimuzEventHandlers
     
+    typealias UIViewType = WKWebView
+    
+    @MainActor
     func makeCoordinator() -> Coordinator {
         Coordinator(configuration: configuration, eventHandlers: eventHandlers)
     }
     
+    @MainActor
     func makeUIView(context: Context) -> WKWebView {
         let webViewConfiguration = WKWebViewConfiguration()
         webViewConfiguration.allowsInlineMediaPlayback = true
@@ -62,6 +68,7 @@ internal struct LegitimuzWebViewInternal: UIViewRepresentable {
     
     // MARK: - JavaScript Injection
     
+    @MainActor
     private func createConsoleLoggingScript() -> WKUserScript {
         let source = """
         (function() {
@@ -123,6 +130,7 @@ internal struct LegitimuzWebViewInternal: UIViewRepresentable {
         )
     }
     
+    @MainActor
     private func createEventHandlingScript() -> WKUserScript {
         let source = """
         // Listen for Legitimuz events via postMessage
@@ -152,7 +160,9 @@ internal struct LegitimuzWebViewInternal: UIViewRepresentable {
 
 // MARK: - Coordinator
 
+@available(iOS 16.0, *)
 extension LegitimuzWebViewInternal {
+    @MainActor
     class Coordinator: NSObject, WKUIDelegate, WKNavigationDelegate, CLLocationManagerDelegate {
         private let configuration: LegitimuzConfiguration
         private let eventHandlers: LegitimuzEventHandlers
@@ -173,6 +183,7 @@ extension LegitimuzWebViewInternal {
         
         // MARK: - WKUIDelegate
         
+        @available(iOS 15.0, *)
         func webView(_ webView: WKWebView,
                      requestMediaCapturePermissionFor origin: WKSecurityOrigin,
                      initiatedByFrame frame: WKFrameInfo,
@@ -218,4 +229,17 @@ extension LegitimuzWebViewInternal {
             completionHandler(.performDefaultHandling, nil)
         }
     }
-} 
+}
+#else
+// Provide a stub for non-iOS platforms
+@available(iOS 16.0, *)
+internal struct LegitimuzWebViewInternal: View {
+    let configuration: LegitimuzConfiguration
+    let eventHandlers: LegitimuzEventHandlers
+    
+    var body: some View {
+        Text("LegitimuzSDK is only available on iOS")
+            .foregroundColor(.red)
+    }
+}
+#endif 
