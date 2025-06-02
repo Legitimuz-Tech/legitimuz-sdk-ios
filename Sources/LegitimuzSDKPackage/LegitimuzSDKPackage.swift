@@ -7,14 +7,14 @@ import SwiftUI
 // MARK: - Public API
 
 /// Verification types supported by Legitimuz SDK
-public enum LegitimuzVerificationType {
+public enum LegitimuzVerificationType: Sendable {
     case kyc
     case sow
     case faceIndex
 }
 
 /// Valid actions for verification context
-public enum LegitimuzAction: String, CaseIterable {
+public enum LegitimuzAction: String, CaseIterable, Sendable {
     case signup = "signup"
     case signin = "signin"
     case withdraw = "withdraw"
@@ -23,7 +23,7 @@ public enum LegitimuzAction: String, CaseIterable {
 }
 
 /// Main configuration object for the Legitimuz SDK
-public struct LegitimuzConfiguration {
+public struct LegitimuzConfiguration: Sendable {
     /// The API host URL for session generation
     public let host: URL
     /// Authentication token for API requests
@@ -83,7 +83,7 @@ public struct LegitimuzConfiguration {
 }
 
 /// Parameters for starting verification
-public struct LegitimuzVerificationParameters {
+public struct LegitimuzVerificationParameters: Sendable {
     /// CPF number for verification
     public let cpf: String
     /// Optional reference ID for tracking
@@ -107,7 +107,7 @@ public struct LegitimuzVerificationParameters {
 }
 
 /// Event data received from the Legitimuz SDK
-public struct LegitimuzEvent {
+public struct LegitimuzEvent: Sendable {
     /// The name of the event (e.g., "ocr", "facematch", "close-modal")
     public let name: String
     /// The status of the event ("success", "error", or custom status)
@@ -126,7 +126,7 @@ public struct LegitimuzEvent {
 }
 
 /// Log level for JavaScript console messages
-public enum LegitimuzLogLevel {
+public enum LegitimuzLogLevel: Sendable {
     case log
     case error
     case warning
@@ -189,7 +189,7 @@ public class LegitimuzSDK: ObservableObject {
     /// Start verification process by generating a session
     /// - Parameter parameters: Verification parameters including CPF and type
     public func startVerification(with parameters: LegitimuzVerificationParameters) {
-        Task {
+        Task { @MainActor in
             await generateSession(with: parameters)
         }
     }
