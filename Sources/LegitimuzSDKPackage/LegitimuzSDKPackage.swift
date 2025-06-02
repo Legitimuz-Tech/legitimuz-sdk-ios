@@ -167,8 +167,8 @@ public struct LegitimuzEventHandlers {
 /// Main Legitimuz SDK class for managing verification sessions
 @available(iOS 16.0, *)
 public class LegitimuzSDK: ObservableObject {
-    private let configuration: LegitimuzConfiguration
-    private let eventHandlers: LegitimuzEventHandlers
+    internal let configuration: LegitimuzConfiguration
+    internal let eventHandlers: LegitimuzEventHandlers
     
     @Published public var isLoading: Bool = false
     @Published public var sessionURL: URL?
