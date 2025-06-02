@@ -202,7 +202,7 @@ public class LegitimuzSDK: ObservableObject {
         
         do {
             let sessionId = try await performSessionGeneration(with: parameters)
-            sessionURL = buildSessionURL(sessionId: sessionId, parameters: parameters)
+            sessionURL = await buildSessionURL(sessionId: sessionId, parameters: parameters)
             isLoading = false
         } catch {
             errorMessage = error.localizedDescription
@@ -276,8 +276,10 @@ public class LegitimuzSDK: ObservableObject {
     }
     
     /// Build the session URL for the WebView
-    private func buildSessionURL(sessionId: String, parameters: LegitimuzVerificationParameters) -> URL {
-        let isMobile = UIDevice.current.userInterfaceIdiom == .phone
+    private func buildSessionURL(sessionId: String, parameters: LegitimuzVerificationParameters) async -> URL {
+        let isMobile = await MainActor.run {
+            UIDevice.current.userInterfaceIdiom == .phone
+        }
         let feature: String
         
         switch parameters.verificationType {
