@@ -368,48 +368,43 @@ public struct LegitimuzWebView: View {
     }
     
     public var body: some View {
-        Group {
-            if sdk.isLoading {
-                AnyView(
-                    VStack {
-                        ProgressView()
-                        Text("Generating session...")
-                            .foregroundColor(.gray)
-                    }
-                )
-            } else if let errorMessage = sdk.errorMessage {
-                AnyView(
-                    VStack {
-                        Image(systemName: "exclamationmark.triangle")
-                            .foregroundColor(.red)
-                            .font(.largeTitle)
-                        Text("Error: \(errorMessage)")
-                            .foregroundColor(.red)
-                            .multilineTextAlignment(.center)
-                    }
-                    .padding()
-                )
-            } else if let sessionURL = sdk.sessionURL {
-                AnyView(
-                    LegitimuzWebViewInternal(
-                        sessionURL: sessionURL,
-                        configuration: sdk.configuration,
-                        eventHandlers: sdk.eventHandlers
-                    )
-                    .ignoresSafeArea(.all)
-                )
-            } else {
-                AnyView(
-                    VStack {
-                        Text("Ready to start verification")
-                            .foregroundColor(.gray)
-                    }
-                )
+        content
+            .onAppear {
+                if let parameters = parameters {
+                    sdk.startVerification(with: parameters)
+                }
             }
-        }
-        .onAppear {
-            if let parameters = parameters {
-                sdk.startVerification(with: parameters)
+    }
+    
+    @ViewBuilder
+    private var content: some View {
+        if sdk.isLoading {
+            VStack {
+                ProgressView()
+                Text("Generating session...")
+                    .foregroundColor(.gray)
+            }
+        } else if let errorMessage = sdk.errorMessage {
+            VStack {
+                Image(systemName: "exclamationmark.triangle")
+                    .foregroundColor(.red)
+                    .font(.largeTitle)
+                Text("Error: \(errorMessage)")
+                    .foregroundColor(.red)
+                    .multilineTextAlignment(.center)
+            }
+            .padding()
+        } else if let sessionURL = sdk.sessionURL {
+            LegitimuzWebViewInternal(
+                sessionURL: sessionURL,
+                configuration: sdk.configuration,
+                eventHandlers: sdk.eventHandlers
+            )
+            .ignoresSafeArea(.all)
+        } else {
+            VStack {
+                Text("Ready to start verification")
+                    .foregroundColor(.gray)
             }
         }
     }
