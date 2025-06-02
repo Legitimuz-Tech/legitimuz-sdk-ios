@@ -218,7 +218,7 @@ public class LegitimuzSDK: ObservableObject {
         request.httpMethod = "POST"
         
         // Create form data
-        let formData = createFormData(with: parameters)
+        let formData = await createFormData(with: parameters)
         let boundary = "Boundary-\(UUID().uuidString)"
         request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
         request.httpBody = formData.data(using: boundary)
@@ -246,13 +246,13 @@ public class LegitimuzSDK: ObservableObject {
     }
     
     /// Create form data for session generation
-    private func createFormData(with parameters: LegitimuzVerificationParameters) -> FormData {
+    private func createFormData(with parameters: LegitimuzVerificationParameters) async -> FormData {
         var formData = FormData()
         
         formData.append("cpf", value: parameters.cpf)
         formData.append("token", value: configuration.token)
-        formData.append("deviceinfo", value: getDeviceInfo())
-        formData.append("user_agent", value: getUserAgent())
+        formData.append("deviceinfo", value: await getDeviceInfo())
+        formData.append("user_agent", value: await getUserAgent())
         
         if let deviceMemory = getDeviceMemory() {
             formData.append("device_memory", value: deviceMemory)
@@ -317,12 +317,16 @@ public class LegitimuzSDK: ObservableObject {
     
     // MARK: - Device Info Helpers
     
-    private func getDeviceInfo() -> String {
-        return "\(UIDevice.current.systemName) \(UIDevice.current.systemVersion)"
+    private func getDeviceInfo() async -> String {
+        return await MainActor.run {
+            "\(UIDevice.current.systemName) \(UIDevice.current.systemVersion)"
+        }
     }
     
-    private func getUserAgent() -> String {
-        return "LegitimuzSDK/1.0.0 (iOS \(UIDevice.current.systemVersion))"
+    private func getUserAgent() async -> String {
+        return await MainActor.run {
+            "LegitimuzSDK/2.1.0 (iOS \(UIDevice.current.systemVersion))"
+        }
     }
     
     private func getDeviceMemory() -> String? {
