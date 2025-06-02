@@ -107,14 +107,14 @@ public struct LegitimuzVerificationParameters: Sendable {
 }
 
 /// Event data received from the Legitimuz SDK
-public struct LegitimuzEvent: Sendable {
+public struct LegitimuzEvent: @unchecked Sendable {
     /// The name of the event (e.g., "ocr", "facematch", "close-modal")
     public let name: String
     /// The status of the event ("success", "error", or custom status)
     public let status: String
     /// Optional reference ID for tracking
     public let refId: String?
-    /// Complete raw event data
+    /// Complete raw event data (JSON-serializable data from JavaScript)
     public let rawData: [String: Any]
     
     internal init(from data: [String: Any]) {
@@ -166,6 +166,7 @@ public struct LegitimuzEventHandlers {
 
 /// Main Legitimuz SDK class for managing verification sessions
 @available(iOS 16.0, *)
+@MainActor
 public class LegitimuzSDK: ObservableObject {
     internal let configuration: LegitimuzConfiguration
     internal let eventHandlers: LegitimuzEventHandlers
@@ -189,20 +190,19 @@ public class LegitimuzSDK: ObservableObject {
     /// Start verification process by generating a session
     /// - Parameter parameters: Verification parameters including CPF and type
     public func startVerification(with parameters: LegitimuzVerificationParameters) {
-        Task { @MainActor in
+        Task {
             await generateSession(with: parameters)
         }
     }
     
     /// Generate verification session
-    @MainActor
     private func generateSession(with parameters: LegitimuzVerificationParameters) async {
         isLoading = true
         errorMessage = nil
         
         do {
             let sessionId = try await performSessionGeneration(with: parameters)
-            sessionURL = await buildSessionURL(sessionId: sessionId, parameters: parameters)
+            sessionURL = buildSessionURL(sessionId: sessionId, parameters: parameters)
             isLoading = false
         } catch {
             errorMessage = error.localizedDescription
@@ -218,7 +218,7 @@ public class LegitimuzSDK: ObservableObject {
         request.httpMethod = "POST"
         
         // Create form data
-        let formData = await createFormData(with: parameters)
+        let formData = createFormData(with: parameters)
         let boundary = "Boundary-\(UUID().uuidString)"
         request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
         request.httpBody = formData.data(using: boundary)
@@ -246,13 +246,13 @@ public class LegitimuzSDK: ObservableObject {
     }
     
     /// Create form data for session generation
-    private func createFormData(with parameters: LegitimuzVerificationParameters) async -> FormData {
+    private func createFormData(with parameters: LegitimuzVerificationParameters) -> FormData {
         var formData = FormData()
         
         formData.append("cpf", value: parameters.cpf)
         formData.append("token", value: configuration.token)
-        formData.append("deviceinfo", value: await getDeviceInfo())
-        formData.append("user_agent", value: await getUserAgent())
+        formData.append("deviceinfo", value: getDeviceInfo())
+        formData.append("user_agent", value: getUserAgent())
         
         if let deviceMemory = getDeviceMemory() {
             formData.append("device_memory", value: deviceMemory)
@@ -276,10 +276,8 @@ public class LegitimuzSDK: ObservableObject {
     }
     
     /// Build the session URL for the WebView
-    private func buildSessionURL(sessionId: String, parameters: LegitimuzVerificationParameters) async -> URL {
-        let isMobile = await MainActor.run {
-            UIDevice.current.userInterfaceIdiom == .phone
-        }
+    private func buildSessionURL(sessionId: String, parameters: LegitimuzVerificationParameters) -> URL {
+        let isMobile = UIDevice.current.userInterfaceIdiom == .phone
         let feature: String
         
         switch parameters.verificationType {
@@ -317,16 +315,12 @@ public class LegitimuzSDK: ObservableObject {
     
     // MARK: - Device Info Helpers
     
-    private func getDeviceInfo() async -> String {
-        return await MainActor.run {
-            "\(UIDevice.current.systemName) \(UIDevice.current.systemVersion)"
-        }
+    private func getDeviceInfo() -> String {
+        return "\(UIDevice.current.systemName) \(UIDevice.current.systemVersion)"
     }
     
-    private func getUserAgent() async -> String {
-        return await MainActor.run {
-            "LegitimuzSDK/2.1.0 (iOS \(UIDevice.current.systemVersion))"
-        }
+    private func getUserAgent() -> String {
+        return "LegitimuzSDK/2.1.0 (iOS \(UIDevice.current.systemVersion))"
     }
     
     private func getDeviceMemory() -> String? {
