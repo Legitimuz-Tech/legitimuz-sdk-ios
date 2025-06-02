@@ -391,7 +391,7 @@ public struct LegitimuzWebView: View {
                     configuration: sdk.configuration,
                     eventHandlers: sdk.eventHandlers
                 )
-                .ignoresSafeArea(SafeAreaRegions.all)
+                .ignoresSafeArea(.all)
             } else {
                 VStack {
                     Text("Ready to start verification")
