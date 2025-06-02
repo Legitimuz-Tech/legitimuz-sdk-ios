@@ -7,6 +7,7 @@ import CoreLocation
 #if os(iOS)
 @available(iOS 16.0, *)
 internal struct LegitimuzWebViewInternal: UIViewRepresentable {
+    let sessionURL: URL
     let configuration: LegitimuzConfiguration
     let eventHandlers: LegitimuzEventHandlers
     
@@ -57,8 +58,8 @@ internal struct LegitimuzWebViewInternal: UIViewRepresentable {
             }
         }
         
-        // Load the SDK URL
-        let request = URLRequest(url: configuration.sdkURL)
+        // Load the session URL
+        let request = URLRequest(url: sessionURL)
         webView.load(request)
         
         return webView
@@ -234,6 +235,7 @@ extension LegitimuzWebViewInternal {
 // Provide a stub for non-iOS platforms
 @available(iOS 16.0, *)
 internal struct LegitimuzWebViewInternal: View {
+    let sessionURL: URL
     let configuration: LegitimuzConfiguration
     let eventHandlers: LegitimuzEventHandlers
     

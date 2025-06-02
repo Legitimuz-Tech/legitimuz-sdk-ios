@@ -1,19 +1,20 @@
 # LegitimuzSDK
 
-A Swift Package Manager library for integrating Legitimuz identity verification services into iOS applications using WebView technology.
+A Swift Package Manager library for integrating Legitimuz identity verification services into iOS applications. This SDK generates verification sessions dynamically and displays them in a WebView, just like the JavaScript SDK.
 
 ## Overview
 
-LegitimuzSDK provides a clean, SwiftUI-based interface for integrating Legitimuz's identity verification and KYC (Know Your Customer) services into your iOS app. The library handles all the complex WebView setup, JavaScript communication, permission management, and event handling required for a seamless integration.
+LegitimuzSDK provides a clean, SwiftUI-based interface for integrating Legitimuz's identity verification and KYC (Know Your Customer) services into your iOS app. The library handles session generation, WebView setup, JavaScript communication, permission management, and event handling for a seamless integration.
 
 ## Features
 
-- 🚀 **Easy Integration**: Simple SwiftUI component that drops into any view
-- 📱 **Native Performance**: Optimized WebView implementation with automatic permission handling
+- 🚀 **Session Generation**: Automatically generates verification sessions via API calls
+- 📱 **Multiple Verification Types**: Support for KYC, SOW (Source of Wealth), and Face Index verification
 - 🔍 **Debug Support**: Complete JavaScript console logging and WebView inspection capabilities
 - 🎯 **Event Handling**: Comprehensive event system for tracking SDK operations
 - 🔒 **Secure**: Automatic camera, microphone, and location permission management
 - 📦 **Zero Dependencies**: Pure SwiftUI/WebKit implementation with no external dependencies
+- ✅ **CPF Validation**: Built-in Brazilian CPF validation
 
 ## Requirements
 
@@ -62,7 +63,7 @@ Add these permissions to your app's `Info.plist`:
 
 ## Quick Start
 
-### Basic Implementation
+### Basic KYC Verification
 
 ```swift
 import SwiftUI
@@ -76,8 +77,14 @@ struct ContentView: View {
             Text("Status: \(currentEvent)")
                 .padding()
             
-            LegitimuzWebView(
-                configuration: .demo(), // Uses demo URL
+            LegitimuzWebView.forKYCVerification(
+                configuration: LegitimuzConfiguration(
+                    host: URL(string: "https://api.yourdomain.com")!,
+                    token: "your-api-token"
+                ),
+                cpf: "12345678901",
+                referenceId: "user-ref-123",
+                action: .signup,
                 eventHandlers: LegitimuzEventHandlers(
                     onEvent: { event in
                         currentEvent = "\(event.name) (\(event.status))"
@@ -95,60 +102,69 @@ struct ContentView: View {
 }
 ```
 
-### Production Configuration
+### Using the SDK Class Directly
 
 ```swift
 import SwiftUI
 import LegitimuzSDK
 
 struct VerificationView: View {
-    @State private var verificationStatus: String = "Starting verification..."
-    @State private var isComplete: Bool = false
+    @StateObject private var sdk = LegitimuzSDK(
+        configuration: LegitimuzConfiguration(
+            host: URL(string: "https://api.yourdomain.com")!,
+            token: "your-api-token"
+        ),
+        eventHandlers: LegitimuzEventHandlers(
+            onEvent: { event in
+                print("Event: \(event.name)")
+            }
+        )
+    )
     
     var body: some View {
-        if isComplete {
-            VerificationCompleteView()
-        } else {
-            LegitimuzWebView(
-                configuration: LegitimuzConfiguration(
-                    sdkURL: URL(string: "https://your-domain.com/verification")!,
-                    enableDebugLogging: false, // Disable for production
-                    enableInspection: false
-                ),
-                eventHandlers: LegitimuzEventHandlers(
-                    onEvent: { event in
-                        handleEvent(event)
-                    },
-                    onSuccess: { eventName in
-                        if eventName == "verification_complete" {
-                            isComplete = true
-                        }
-                    },
-                    onError: { eventName in
-                        // Handle errors
-                        showErrorAlert(for: eventName)
-                    },
-                    onLog: { message, level in
-                        // Custom logging in production
-                        if level == .error {
-                            logError(message)
-                        }
-                    }
-                )
-            )
+        VStack {
+            if sdk.isLoading {
+                ProgressView("Generating session...")
+            } else if let error = sdk.errorMessage {
+                Text("Error: \(error)")
+                    .foregroundColor(.red)
+            } else {
+                LegitimuzWebView(sdk: sdk)
+            }
+            
+            HStack {
+                Button("Start KYC") {
+                    sdk.verifyDocument(cpf: "12345678901")
+                }
+                Button("Start SOW") {
+                    sdk.openVerifySOWFlow(cpf: "12345678901")
+                }
+                Button("Face Index") {
+                    sdk.startFaceIndex(cpf: "12345678901")
+                }
+            }
         }
     }
-    
-    private func handleEvent(_ event: LegitimuzEvent) {
-        verificationStatus = event.name
-        
-        // Access complete event data
-        if let refId = event.refId {
-            print("Reference ID: \(refId)")
-        }
-        
-        // Access raw data for custom processing
-        print("Raw event data: \(event.rawData)")
+}
+```
+
+### Demo Configuration
+
+```swift
+import SwiftUI
+import LegitimuzSDK
+
+struct DemoView: View {
+    var body: some View {
+        LegitimuzWebView.forKYCVerification(
+            configuration: LegitimuzConfiguration.demo(token: "demo-token"),
+            cpf: "55555555555", // Test CPF
+            eventHandlers: LegitimuzEventHandlers(
+                onEvent: { event in
+                    print("Demo event: \(event.name)")
+                }
+            )
+        )
     }
 }
 ```
@@ -159,19 +175,60 @@ struct VerificationView: View {
 
 ```swift
 let config = LegitimuzConfiguration(
-    sdkURL: URL(string: "https://your-verification-url.com")!,
-    enableDebugLogging: true,  // Enable JavaScript console logging
-    enableInspection: true     // Enable WebView debugging (iOS 16.4+)
+    host: URL(string: "https://api.yourdomain.com")!,        // Your API host
+    token: "your-api-token",                                  // Authentication token
+    appURL: URL(string: "https://widget.legitimuz.com")!,    // Widget URL (optional)
+    language: "pt",                                           // Language: "pt", "en", "es"
+    enableDebugLogging: true,                                 // Enable JS console logs
+    enableInspection: true                                    // Enable WebView debugging
 )
 
 // Or use the demo configuration
 let demoConfig = LegitimuzConfiguration.demo(
+    token: "your-demo-token",
     enableDebugLogging: true,
     enableInspection: false
 )
 ```
 
-### Event Handlers
+### Verification Types
+
+```swift
+// Standard KYC verification
+LegitimuzWebView.forKYCVerification(configuration: config, cpf: "12345678901", eventHandlers: handlers)
+
+// SOW (Source of Wealth) verification
+LegitimuzWebView.forSOWVerification(configuration: config, cpf: "12345678901", eventHandlers: handlers)
+
+// Face indexing/liveness verification
+LegitimuzWebView.forFaceIndexVerification(configuration: config, cpf: "12345678901", eventHandlers: handlers)
+```
+
+### Actions
+
+```swift
+// Available action contexts
+let action: LegitimuzAction = .signup              // "signup"
+let action: LegitimuzAction = .signin              // "signin"
+let action: LegitimuzAction = .withdraw            // "withdraw"
+let action: LegitimuzAction = .passwordChange      // "password_change"
+let action: LegitimuzAction = .accountDetailsChange // "account_details_change"
+```
+
+## CPF Validation
+
+```swift
+// Validate CPF
+let isValid = LegitimuzSDK.validateCPF("123.456.789-01")
+let isValidTest = LegitimuzSDK.validateCPF("555.555.555-55") // Test CPF returns true
+
+// Clean CPF (remove formatting)
+let cleanCPF = LegitimuzSDK.cleanCPF("123.456.789-01") // Returns "12345678901"
+```
+
+## Event Handling
+
+### Complete Event Handling
 
 ```swift
 let handlers = LegitimuzEventHandlers(
@@ -181,6 +238,7 @@ let handlers = LegitimuzEventHandlers(
         if let refId = event.refId {
             print("Reference ID: \(refId)")
         }
+        print("Raw data: \(event.rawData)")
     },
     onSuccess: { eventName in
         // Handle successful operations
@@ -204,113 +262,174 @@ let handlers = LegitimuzEventHandlers(
 )
 ```
 
-## Event Types
+### Event Types
 
 The SDK emits various events during the verification process:
 
 - **`page_loaded`**: WebView finished loading
+- **`session_generation_failed`**: Session generation failed
 - **`ocr`**: Document OCR processing
 - **`facematch`**: Face matching operation
 - **`liveness`**: Liveness detection
+- **`sow`**: Source of Wealth verification
+- **`faceindex`**: Face indexing verification
 - **`close-modal`**: User closed the verification modal
-- **`verification_complete`**: Entire verification process completed
+- **`modal`**: Modal open/close events
 
 Each event includes:
 - `name`: Event identifier
-- `status`: "success", "error", or custom status
+- `status`: "success", "error", or custom status  
 - `refId`: Optional reference ID for tracking
 - `rawData`: Complete event data from the SDK
 
-## Debug Mode
-
-Enable debug mode for development:
-
-```swift
-let config = LegitimuzConfiguration.demo(
-    enableDebugLogging: true,  // See all JavaScript console output
-    enableInspection: true     // Enable Safari Web Inspector (iOS 16.4+)
-)
-```
-
-Debug mode provides:
-- JavaScript console output in Xcode console
-- Uncaught error capturing
-- Promise rejection handling
-- WebView inspection capabilities
-
 ## Advanced Usage
 
-### Custom URL Handling
+### Custom Session Management
 
 ```swift
-struct CustomVerificationView: View {
-    let userToken: String
+class VerificationManager: ObservableObject {
+    @Published var currentStep: VerificationStep = .idle
+    private let sdk: LegitimuzSDK
     
-    var body: some View {
-        LegitimuzWebView(
+    init() {
+        self.sdk = LegitimuzSDK(
             configuration: LegitimuzConfiguration(
-                sdkURL: URL(string: "https://api.legitimuz.com/verify?token=\(userToken)")!
+                host: URL(string: "https://api.yourdomain.com")!,
+                token: "your-token"
             ),
             eventHandlers: LegitimuzEventHandlers(
-                onEvent: { event in
-                    // Custom event processing
-                    processVerificationEvent(event)
+                onEvent: { [weak self] event in
+                    self?.handleEvent(event)
                 }
             )
         )
     }
-}
-```
-
-### State Management
-
-```swift
-class VerificationViewModel: ObservableObject {
-    @Published var currentStep: VerificationStep = .starting
-    @Published var errorMessage: String?
-    @Published var isComplete: Bool = false
     
-    func handleEvent(_ event: LegitimuzEvent) {
+    func startKYCVerification(for user: User) {
+        guard LegitimuzSDK.validateCPF(user.cpf) else {
+            currentStep = .error("Invalid CPF")
+            return
+        }
+        
+        currentStep = .generating
+        sdk.verifyDocument(
+            cpf: LegitimuzSDK.cleanCPF(user.cpf),
+            referenceId: user.id,
+            action: .signup
+        )
+    }
+    
+    private func handleEvent(_ event: LegitimuzEvent) {
         DispatchQueue.main.async {
             switch event.name {
-            case "document_capture":
-                self.currentStep = .documentCapture
-            case "liveness_check":
-                self.currentStep = .livenessCheck
-            case "verification_complete":
-                self.currentStep = .complete
-                self.isComplete = true
+            case "ocr":
+                if event.status == "success" {
+                    self.currentStep = .documentScanned
+                }
+            case "facematch":
+                if event.status == "success" {
+                    self.currentStep = .faceMatched
+                }
+            case "close-modal":
+                self.currentStep = .completed
             default:
                 break
             }
         }
     }
+}
+```
+
+### Error Handling
+
+```swift
+struct VerificationView: View {
+    @StateObject private var sdk: LegitimuzSDK
     
-    func handleError(_ eventName: String) {
-        DispatchQueue.main.async {
-            self.errorMessage = "Error in \(eventName)"
+    var body: some View {
+        Group {
+            if sdk.isLoading {
+                LoadingView()
+            } else if let error = sdk.errorMessage {
+                ErrorView(error: error) {
+                    retryVerification()
+                }
+            } else if let sessionURL = sdk.sessionURL {
+                LegitimuzWebView(sdk: sdk)
+            } else {
+                IdleView()
+            }
         }
+        .alert("Verification Error", isPresented: .constant(sdk.errorMessage != nil)) {
+            Button("Retry") { retryVerification() }
+            Button("Cancel") { /* Handle cancel */ }
+        }
+    }
+    
+    private func retryVerification() {
+        sdk.verifyDocument(cpf: "12345678901")
     }
 }
 ```
 
 ## Testing
 
-The library includes a test suite. Run tests with:
+The library includes a comprehensive test suite. Run tests with:
 
 ```bash
 swift test
 ```
 
-For testing in your app, use the demo configuration:
+### Using Test CPF
+
+For testing, use the special test CPF that always validates:
 
 ```swift
-let testConfig = LegitimuzConfiguration.demo(enableDebugLogging: true)
+let testCPF = "55555555555"
+let isValid = LegitimuzSDK.validateCPF(testCPF) // Returns true
+
+LegitimuzWebView.forKYCVerification(
+    configuration: .demo(token: "test-token"),
+    cpf: testCPF,
+    eventHandlers: handlers
+)
+```
+
+## Migration from Previous Version
+
+If you were using the previous version that took a static URL, here's how to migrate:
+
+### Before (v1.0):
+```swift
+LegitimuzWebView(
+    configuration: LegitimuzConfiguration(
+        sdkURL: URL(string: "https://your-url.com")!
+    ),
+    eventHandlers: handlers
+)
+```
+
+### After (v2.0):
+```swift
+LegitimuzWebView.forKYCVerification(
+    configuration: LegitimuzConfiguration(
+        host: URL(string: "https://api.your-domain.com")!,
+        token: "your-api-token"
+    ),
+    cpf: "12345678901",
+    eventHandlers: handlers
+)
 ```
 
 ## Troubleshooting
 
 ### Common Issues
+
+**Session generation fails:**
+- Verify your API host URL is correct
+- Check that your authentication token is valid
+- Ensure the CPF is valid (use `LegitimuzSDK.validateCPF()`)
+- Check network connectivity
 
 **Camera not working:**
 - Ensure camera permissions are added to Info.plist
@@ -319,17 +438,8 @@ let testConfig = LegitimuzConfiguration.demo(enableDebugLogging: true)
 
 **No events received:**
 - Enable debug logging to see JavaScript console output
-- Verify the SDK URL is correct and accessible
-- Check network connectivity
-
-**JavaScript errors:**
-- Enable debug logging and WebView inspection
-- Look for JavaScript console errors in Xcode output
-
-**Page not loading:**
-- Verify the SDK URL is accessible
-- Check network permissions and connectivity
-- Ensure the URL returns valid HTML content
+- Verify the widget URL is accessible
+- Check that events are properly configured in your Legitimuz dashboard
 
 ### Debug Logging
 
@@ -337,43 +447,14 @@ Enable comprehensive logging:
 
 ```swift
 let config = LegitimuzConfiguration(
-    sdkURL: yourURL,
+    host: yourHost,
+    token: yourToken,
     enableDebugLogging: true,
     enableInspection: true
 )
 ```
 
 This will output detailed logs with `[LegitimuzSDK]` prefix in Xcode console.
-
-## Publishing Your Package
-
-Once you're ready to publish:
-
-1. **Create a Git Tag:**
-   ```bash
-   git tag 1.0.0
-   git push origin 1.0.0
-   ```
-
-2. **Update Your GitHub Repository:**
-   - Ensure it's public
-   - Add description: "Swift Package for integrating Legitimuz identity verification services"
-   - Add topics: swift-package, ios, identity-verification, kyc
-
-3. **Developers Can Then Add It:**
-   ```swift
-   dependencies: [
-       .package(url: "https://github.com/yourusername/LegitimuzSDKPackage", from: "1.0.0")
-   ]
-   ```
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests for new functionality
-5. Submit a pull request
 
 ## License
 
