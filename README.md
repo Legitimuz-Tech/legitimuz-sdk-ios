@@ -19,6 +19,170 @@ dependencies: [
 ]
 ```
 
+## Developer Requirements
+
+### Platform & System Requirements
+
+- **iOS Version**: iOS 16.0 or later
+- **Swift Version**: Swift 6.1 or later  
+- **Xcode**: Xcode 15.0 or later recommended
+- **Device**: Physical iOS device required for camera-based verification (iOS Simulator has limited camera functionality)
+- **Architecture**: Supports both arm64 and x86_64 architectures
+
+### Framework Dependencies
+
+- **SwiftUI**: Core UI framework (iOS 16.0+)
+- **WebKit**: For WebView integration
+- **Foundation**: Basic system services
+- **CoreLocation**: For location-based verification features
+- **No External Dependencies**: Pure iOS implementation
+
+### API Integration Requirements
+
+Before integrating the SDK, ensure you have:
+
+1. **API Host URL**: Your Legitimuz API endpoint (e.g., `https://api.legitimuz.com`)
+2. **Authentication Token**: Valid API token for session generation
+3. **Network Connectivity**: HTTPS-enabled internet connection
+4. **Legitimuz Account**: Active Legitimuz service account with configured verification flows
+
+### Code Integration Requirements
+
+#### 1. Import Statement
+```swift
+import LegitimuzSDK
+```
+
+#### 2. Minimum Configuration
+```swift
+let config = LegitimuzConfiguration(
+    host: URL(string: "https://api.legitimuz.com")!,
+    token: "your-api-token"
+)
+```
+
+#### 3. Event Handling Implementation
+```swift
+let handlers = LegitimuzEventHandlers(
+    onEvent: { event in
+        // Handle verification events
+    },
+    onSuccess: { eventName in
+        // Handle successful operations
+    },
+    onError: { eventName in
+        // Handle errors
+    }
+)
+```
+
+### Required App Permissions
+
+Add these permissions to your app's `Info.plist`:
+
+```xml
+<!-- Camera Permission - Required for document scanning and liveness detection -->
+<key>NSCameraUsageDescription</key>
+<string>This app needs camera access for identity verification</string>
+
+<!-- Microphone Permission - May be required for certain verification features -->
+<key>NSMicrophoneUsageDescription</key>
+<string>This app needs microphone access for identity verification</string>
+
+<!-- Location Permissions - Required if using geolocation features -->
+<key>NSLocationWhenInUseUsageDescription</key>
+<string>This app needs location access for identity verification</string>
+<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+<string>This app may need location access for verification features</string>
+```
+
+### Development Environment Setup
+
+#### For Debug/Development:
+```swift
+let config = LegitimuzConfiguration(
+    host: yourAPIHost,
+    token: yourToken,
+    enableDebugLogging: true,    // Enable JavaScript console logging
+    enableInspection: true       // Enable Safari Web Inspector (iOS 16.4+)
+)
+```
+
+#### For Production:
+```swift
+let config = LegitimuzConfiguration(
+    host: yourAPIHost,
+    token: yourToken,
+    enableDebugLogging: false,   // Disable logging in production
+    enableInspection: false      // Disable inspection in production
+)
+```
+
+### Testing Requirements
+
+#### Test Data Support:
+- **Test CPF**: Use `55555555555` for development/testing
+- **CPF Validation**: Built-in validation via `LegitimuzSDK.validateCPF()`
+- **Demo Configuration**: Available for initial testing
+
+#### Device Testing:
+- Camera-based features require physical iOS device
+- Test on multiple device sizes (iPhone, iPad)
+- Test different iOS versions within supported range
+
+### Architecture Considerations
+
+#### Threading:
+- SDK operations are performed on main thread (`@MainActor`)
+- Async/await support for session generation
+- Event callbacks executed on main thread
+
+#### Memory Management:
+- SDK uses `@StateObject` for SwiftUI integration
+- Automatic cleanup of WebView resources
+- No manual memory management required
+
+#### Network Requirements:
+- HTTPS endpoints required for API calls
+- Handles network failures gracefully
+- Built-in retry logic for session generation
+
+### Integration Patterns
+
+#### SwiftUI Integration:
+```swift
+struct YourView: View {
+    var body: some View {
+        LegitimuzWebView.forKYCVerification(
+            configuration: config,
+            cpf: cpf,
+            eventHandlers: handlers
+        )
+    }
+}
+```
+
+#### Programmatic Control:
+```swift
+let sdk = LegitimuzSDK(configuration: config, eventHandlers: handlers)
+sdk.verifyDocument(cpf: "12345678901")
+```
+
+### Security Considerations
+
+- Store API tokens securely (consider using Keychain)
+- Validate CPF numbers before sending to API
+- Handle sensitive user data according to privacy regulations
+- Use HTTPS for all network communications
+- Camera/microphone permissions granted automatically by SDK
+
+### Performance Considerations
+
+- WebView loading time varies with network conditions
+- JavaScript execution may impact performance on older devices
+- Consider loading states for better user experience
+- Optimize for different screen sizes and orientations
+
 ## Required Permissions
 
 Add these permissions to your app's `Info.plist`:
@@ -55,7 +219,7 @@ struct ContentView: View {
             
             LegitimuzWebView.forKYCVerification(
                 configuration: LegitimuzConfiguration(
-                    host: URL(string: "https://api.yourdomain.com")!,
+                    host: URL(string: "https://api.legitimuz.com")!,
                     token: "your-api-token"
                 ),
                 cpf: "12345678901",
@@ -151,7 +315,7 @@ LegitimuzWebView(
 ```swift
 LegitimuzWebView.forKYCVerification(
     configuration: LegitimuzConfiguration(
-        host: URL(string: "https://api.your-domain.com")!,
+        host: URL(string: "https://api.legitimuz.com")!,
         token: "your-api-token"
     ),
     cpf: "12345678901",
