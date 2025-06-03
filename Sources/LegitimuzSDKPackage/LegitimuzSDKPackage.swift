@@ -215,6 +215,8 @@ public class LegitimuzSDK: ObservableObject {
     private func performSessionGeneration(with parameters: LegitimuzVerificationParameters) async throws -> String {
         let url = configuration.host.appendingPathComponent("external/kyc/session")
         var request = URLRequest(url: url)
+        request.setValue("https://ios.appteste.legitimuz.com", forHTTPHeaderField: "Origin")
+
         request.httpMethod = "POST"
         
         // Create form data
