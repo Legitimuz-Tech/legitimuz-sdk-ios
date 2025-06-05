@@ -30,6 +30,8 @@ public struct LegitimuzConfiguration: Sendable {
     public let token: String
     /// The app URL where the widget is hosted (defaults to Legitimuz widget URL)
     public let appURL: URL
+    /// Origin header value for API requests
+    public let origin: String
     /// Language for the SDK interface
     public let language: String
     /// Enable debug logging (console logs from JavaScript)
@@ -41,6 +43,7 @@ public struct LegitimuzConfiguration: Sendable {
     /// - Parameters:
     ///   - host: The API host URL for session generation
     ///   - token: Authentication token for API requests
+    ///   - origin: Origin header value for API requests
     ///   - appURL: The widget URL (defaults to Legitimuz widget)
     ///   - language: Language code ("pt", "en", "es")
     ///   - enableDebugLogging: Whether to log JavaScript console output to Xcode console
@@ -48,6 +51,7 @@ public struct LegitimuzConfiguration: Sendable {
     public init(
         host: URL,
         token: String,
+        origin: String,
         appURL: URL = URL(string: "https://widget.legitimuz.com")!,
         language: String = "pt",
         enableDebugLogging: Bool = true,
@@ -56,6 +60,7 @@ public struct LegitimuzConfiguration: Sendable {
         self.host = host
         self.token = token
         self.appURL = appURL
+        self.origin = origin
         self.language = language
         self.enableDebugLogging = enableDebugLogging
         self.enableInspection = enableInspection
@@ -64,16 +69,19 @@ public struct LegitimuzConfiguration: Sendable {
     /// Convenience initializer with demo configuration
     /// - Parameters:
     ///   - token: Authentication token for API requests
+    ///   - origin: Origin header value for API requests
     ///   - enableDebugLogging: Whether to log JavaScript console output to Xcode console
     ///   - enableInspection: Whether to enable WebView inspection for debugging (iOS 16.4+)
     public static func demo(
         token: String,
+        origin: String,
         enableDebugLogging: Bool = true,
         enableInspection: Bool = false
     ) -> LegitimuzConfiguration {
         return LegitimuzConfiguration(
             host: URL(string: "https://demo.legitimuz.com")!,
             token: token,
+            origin: origin,
             appURL: URL(string: "https://widget.legitimuz.com")!,
             language: "pt",
             enableDebugLogging: enableDebugLogging,
@@ -215,7 +223,7 @@ public class LegitimuzSDK: ObservableObject {
     private func performSessionGeneration(with parameters: LegitimuzVerificationParameters) async throws -> String {
         let url = configuration.host.appendingPathComponent("external/kyc/session")
         var request = URLRequest(url: url)
-        request.setValue("https://ios.app.legitimuz.com", forHTTPHeaderField: "Origin")
+        request.setValue(configuration.origin, forHTTPHeaderField: "Origin")
 
         request.httpMethod = "POST"
         

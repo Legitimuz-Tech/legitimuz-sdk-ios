@@ -43,8 +43,9 @@ Before integrating the SDK, ensure you have:
 
 1. **API Host URL**: Your Legitimuz API endpoint (e.g., `https://api.legitimuz.com`)
 2. **Authentication Token**: Valid API token for session generation
-3. **Network Connectivity**: HTTPS-enabled internet connection
-4. **Legitimuz Account**: Active Legitimuz service account with configured verification flows
+3. **Origin Header**: Origin value for API requests (required parameter)
+4. **Network Connectivity**: HTTPS-enabled internet connection
+5. **Legitimuz Account**: Active Legitimuz service account with configured verification flows
 
 ### Code Integration Requirements
 
@@ -57,7 +58,8 @@ import LegitimuzSDK
 ```swift
 let config = LegitimuzConfiguration(
     host: URL(string: "https://api.legitimuz.com")!,
-    token: "your-api-token"
+    token: "your-api-token",
+    origin: "https://ios.app.legitimuz.com"
 )
 ```
 
@@ -113,6 +115,7 @@ let config = LegitimuzConfiguration(
 let config = LegitimuzConfiguration(
     host: yourAPIHost,
     token: yourToken,
+    origin: yourOrigin,
     enableDebugLogging: false,   // Disable logging in production
     enableInspection: false      // Disable inspection in production
 )
@@ -220,7 +223,8 @@ struct ContentView: View {
             LegitimuzWebView.forKYCVerification(
                 configuration: LegitimuzConfiguration(
                     host: URL(string: "https://api.legitimuz.com")!,
-                    token: "your-api-token"
+                    token: "your-api-token",
+                    origin: "https://ios.app.legitimuz.com"
                 ),
                 cpf: "12345678901",
                 referenceId: "user-ref-123",
@@ -248,6 +252,7 @@ struct ContentView: View {
 let config = LegitimuzConfiguration(
     host: URL(string: "https://api.legitimuz.com")!,        // Your API host
     token: "your-api-token",                                  // Authentication token
+    origin: "https://ios.app.legitimuz.com",                 // Origin header (required)
     appURL: URL(string: "https://widget.legitimuz.com")!,    // Widget URL (optional)
     language: "pt",                                           // Language: "pt", "en", "es"
     enableDebugLogging: true,                                 // Enable JS console logs
@@ -316,7 +321,8 @@ LegitimuzWebView(
 LegitimuzWebView.forKYCVerification(
     configuration: LegitimuzConfiguration(
         host: URL(string: "https://api.legitimuz.com")!,
-        token: "your-api-token"
+        token: "your-api-token",
+        origin: "https://ios.app.legitimuz.com"
     ),
     cpf: "12345678901",
     eventHandlers: handlers
@@ -351,6 +357,7 @@ Enable comprehensive logging:
 let config = LegitimuzConfiguration(
     host: yourHost,
     token: yourToken,
+    origin: yourOrigin,
     enableDebugLogging: true,
     enableInspection: true
 )
