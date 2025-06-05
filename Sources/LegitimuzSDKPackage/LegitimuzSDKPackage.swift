@@ -330,7 +330,7 @@ public class LegitimuzSDK: ObservableObject {
     }
     
     private func getUserAgent() -> String {
-        return "LegitimuzSDK/2.3.0 (iOS \(UIDevice.current.systemVersion))"
+        return "LegitimuzSDK/2.3.2 (iOS \(UIDevice.current.systemVersion))"
     }
     
     private func getDeviceMemory() -> String? {

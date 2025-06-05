@@ -5,6 +5,37 @@ All notable changes to LegitimuzSDK will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.2] - 2025-06-03
+
+### Added
+- **Configurable Origin Header**: Added required `origin` parameter to `LegitimuzConfiguration` for customizable API request origin headers
+- **Enhanced API Configuration**: Origin header is now explicitly configurable instead of hardcoded
+
+### Changed - Breaking Changes ⚠️
+- **Required Origin Parameter**: `LegitimuzConfiguration` now requires an `origin` parameter (no default value)
+- **Parameter Order**: Reordered configuration parameters: `host`, `token`, `origin`, then optional parameters
+- **Demo Configuration**: `LegitimuzConfiguration.demo()` now requires an `origin` parameter
+
+### Migration Guide
+```swift
+// Before (v2.3.1)
+let config = LegitimuzConfiguration(
+    host: URL(string: "https://api.legitimuz.com")!,
+    token: "your-api-token"
+)
+
+// After (v2.3.2)  
+let config = LegitimuzConfiguration(
+    host: URL(string: "https://api.legitimuz.com")!,
+    token: "your-api-token",
+    origin: "https://ios.app.legitimuz.com"  // Now required!
+)
+```
+
+### Enhanced
+- **Documentation**: Updated all examples and documentation to include required origin parameter
+- **API Flexibility**: Developers can now customize the origin header for different deployment scenarios
+
 ## [2.3.0] - 2025-06-03
 
 ### Fixed
